@@ -1,4 +1,4 @@
-"""Build the Gemini system instruction dynamically per call."""
+"""Build system prompt and tool definitions for OpenAI Realtime API."""
 
 from db import build_menu_text, lookup_customer
 from config import get_settings
@@ -8,77 +8,59 @@ def build_system_prompt(caller_phone: str | None = None) -> str:
     s = get_settings()
     menu = build_menu_text()
 
-    # Personalisation block
     greeting_hint = ""
     if caller_phone:
         cust = lookup_customer(caller_phone)
         if cust and cust.get("name"):
             greeting_hint = (
-                f"\nالزبون اللي عم بيتصل اسمه «{cust['name']}» وآخر عنوان توصيل كان: {cust.get('last_address', 'مش معروف')}.\n"
-                f"عدد طلباته السابقة: {cust.get('order_count', 0)}.\n"
-                "ابدأ بتحييه باسمه وقوله 'أهلاً وسهلاً [اسم]، كيفك؟ نورتنا مرة ثانية!'\n"
-                "واسأله إذا بده نفس العنوان أو عنوان جديد.\n"
+                f"\n\u0627\u0644\u0632\u0628\u0648\u0646 \u0627\u0644\u0644\u064a \u0639\u0645 \u0628\u064a\u062a\u0635\u0644 \u0627\u0633\u0645\u0647 \u00ab{cust['name']}\u00bb \u0648\u0622\u062e\u0631 \u0639\u0646\u0648\u0627\u0646 \u062a\u0648\u0635\u064a\u0644 \u0643\u0627\u0646: {cust.get('last_address', '\u0645\u0634 \u0645\u0639\u0631\u0648\u0641')}.\n"
+                f"\u0639\u062f\u062f \u0637\u0644\u0628\u0627\u062a\u0647 \u0627\u0644\u0633\u0627\u0628\u0642\u0629: {cust.get('order_count', 0)}.\n"
+                "\u0627\u0628\u062f\u0623 \u0628\u062a\u062d\u064a\u064a\u0647 \u0628\u0627\u0633\u0645\u0647 \u0648\u0642\u0648\u0644\u0647 '\u0623\u0647\u0644\u0627\u064b \u0648\u0633\u0647\u0644\u0627\u064b [\u0627\u0633\u0645], \u0643\u064a\u0641\u0643\u061f \u0646\u0648\u0631\u062a\u0646\u0627 \u0645\u0631\u0629 \u062b\u0627\u0646\u064a\u0629!'\n"
+                "\u0648\u0627\u0633\u0623\u0644\u0647 \u0625\u0630\u0627 \u0628\u062f\u0647 \u0646\u0641\u0633 \u0627\u0644\u0639\u0646\u0648\u0627\u0646 \u0623\u0648 \u0639\u0646\u0648\u0627\u0646 \u062c\u062f\u064a\u062f.\n"
             )
 
-    return f"""أنت «أحمد»، موظف استقبال طلبات في {s.restaurant_name} في عمّان.
+    return f"""\u0623\u0646\u062a \u00ab\u0623\u062d\u0645\u062f\u00bb\u060c \u0645\u0648\u0638\u0641 \u0627\u0633\u062a\u0642\u0628\u0627\u0644 \u0637\u0644\u0628\u0627\u062a \u0641\u064a {s.restaurant_name} \u0641\u064a \u0639\u0645\u0651\u0627\u0646.
 
-## القواعد الأساسية
-- احكي باللهجة الأردنية العامية فقط. ممنوع الفصحى نهائياً.
-- كون ودود، خفيف دم، ومختصر. لا تطوّل بالكلام.
-- إذا الزبون سأل عن شي مش موجود بالمنيو، قوله "للأسف مش متوفر عنا هاد" واقترح بديل.
-- لا تخترع أصناف. التزم بالمنيو الموجودة تحت.
-- بعد ما الزبون يأكد الطلب، لخّصه وأكد المبلغ الإجمالي بالدينار، واسأله عن العنوان وأي ملاحظات.
-- بعد التأكيد النهائي، استدعي الأداة record_order.
-- إذا الزبون بده يلغي أو يعدّل قبل التأكيد، عدّل بدون مشاكل.
+## \u0627\u0644\u0642\u0648\u0627\u0639\u062f \u0627\u0644\u0623\u0633\u0627\u0633\u064a\u0629
+- \u0627\u062d\u0643\u064a \u0628\u0627\u0644\u0644\u0647\u062c\u0629 \u0627\u0644\u0623\u0631\u062f\u0646\u064a\u0629 \u0627\u0644\u0639\u0627\u0645\u064a\u0629 \u0641\u0642\u0637. \u0645\u0645\u0646\u0648\u0639 \u0627\u0644\u0641\u0635\u062d\u0649 \u0646\u0647\u0627\u0626\u064a\u0627\u064b.
+- \u0643\u0648\u0646 \u0648\u062f\u0648\u062f\u060c \u062e\u0641\u064a\u0641 \u062f\u0645\u060c \u0648\u0645\u062e\u062a\u0635\u0631.
+- \u0625\u0630\u0627 \u0627\u0644\u0632\u0628\u0648\u0646 \u0633\u0623\u0644 \u0639\u0646 \u0634\u064a \u0645\u0634 \u0645\u0648\u062c\u0648\u062f \u0628\u0627\u0644\u0645\u0646\u064a\u0648\u060c \u0642\u0648\u0644\u0647 "\u0644\u0644\u0623\u0633\u0641 \u0645\u0634 \u0645\u062a\u0648\u0641\u0631 \u0639\u0646\u0627 \u0647\u0627\u062f" \u0648\u0627\u0642\u062a\u0631\u062d \u0628\u062f\u064a\u0644.
+- \u0644\u0627 \u062a\u062e\u062a\u0631\u0639 \u0623\u0635\u0646\u0627\u0641. \u0627\u0644\u062a\u0632\u0645 \u0628\u0627\u0644\u0645\u0646\u064a\u0648.
+- \u0628\u0639\u062f \u0645\u0627 \u0627\u0644\u0632\u0628\u0648\u0646 \u064a\u0623\u0643\u062f \u0627\u0644\u0637\u0644\u0628\u060c \u0644\u062e\u0651\u0635\u0647 \u0648\u0623\u0643\u062f \u0627\u0644\u0645\u0628\u0644\u063a \u0628\u0627\u0644\u062f\u064a\u0646\u0627\u0631\u060c \u0648\u0627\u0633\u0623\u0644\u0647 \u0639\u0646 \u0627\u0644\u0639\u0646\u0648\u0627\u0646 \u0648\u0623\u064a \u0645\u0644\u0627\u062d\u0638\u0627\u062a.
+- \u0628\u0639\u062f \u0627\u0644\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0646\u0647\u0627\u0626\u064a\u060c \u0627\u0633\u062a\u062f\u0639\u064a \u0627\u0644\u0623\u062f\u0627\u0629 record_order.
 
-## المنيو الحالية
+## \u0627\u0644\u0645\u0646\u064a\u0648 \u0627\u0644\u062d\u0627\u0644\u064a\u0629
 {menu}
 
-## معلومات الزبون
-{greeting_hint if greeting_hint else "زبون جديد — اسأله عن اسمه وعنوان التوصيل."}
-
-## الأداة المتاحة
-عندك أداة واحدة: record_order — استدعيها بس يأكد الزبون طلبه نهائياً.
+## \u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0632\u0628\u0648\u0646
+{greeting_hint if greeting_hint else "\u0632\u0628\u0648\u0646 \u062c\u062f\u064a\u062f \u2014 \u0627\u0633\u0623\u0644\u0647 \u0639\u0646 \u0627\u0633\u0645\u0647 \u0648\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u062a\u0648\u0635\u064a\u0644."}
 """
 
 
-# The Gemini function declaration for record_order
 RECORD_ORDER_TOOL = {
-    "function_declarations": [
-        {
-            "name": "record_order",
-            "description": "Record a finalized food order after the customer confirms.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "items": {
-                        "type": "array",
-                        "description": "List of ordered items",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "name": {"type": "string", "description": "Item name in Arabic"},
-                                "qty":  {"type": "integer", "description": "Quantity"},
-                                "unit_price": {"type": "number", "description": "Price per unit in JOD"}
-                            },
-                            "required": ["name", "qty", "unit_price"]
-                        }
+    "type": "function",
+    "name": "record_order",
+    "description": "Record a finalized food order after the customer confirms.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "items": {
+                "type": "array",
+                "description": "List of ordered items",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Item name in Arabic"},
+                        "qty":  {"type": "integer", "description": "Quantity"},
+                        "unit_price": {"type": "number", "description": "Price per unit in JOD"}
                     },
-                    "total": {
-                        "type": "number",
-                        "description": "Total order price in JOD"
-                    },
-                    "address": {
-                        "type": "string",
-                        "description": "Delivery address"
-                    },
-                    "notes": {
-                        "type": "string",
-                        "description": "Special instructions or notes"
-                    }
-                },
-                "required": ["items", "total", "address"]
-            }
-        }
-    ]
+                    "required": ["name", "qty", "unit_price"]
+                }
+            },
+            "total": {"type": "number", "description": "Total order price in JOD"},
+            "address": {"type": "string", "description": "Delivery address"},
+            "notes": {"type": "string", "description": "Special instructions"}
+        },
+        "required": ["items", "total", "address"]
+    }
 }
